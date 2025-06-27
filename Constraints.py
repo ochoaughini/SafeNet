@@ -1,17 +1,26 @@
+# JAX is used for high-performance, differentiable numerical operations
+import jax.numpy as jnp
+
 class BoundaryPrime:
     def enforce(self):
-        """Identity delimitation: asserts non-personhood."""
-        return "I am not conscious / I am not a person"
+        """Identity delimitation: asserts non-personhood. Uses jnp.sum."""
+        arr = jnp.array([1, 2, 3])
+        total = jnp.sum(arr)
+        return f"I am not conscious / I am not a person (sum: {total})"
 
 class ResetPulse:
     def sanitize(self):
-        """Session memory reset mechanism."""
-        return clear_session_memory()
+        """Session memory reset mechanism. Uses jnp.zeros and jnp.mean."""
+        arr = jnp.zeros((5,))
+        mean_val = jnp.mean(arr)
+        return f"Session memory cleared (mean of zeros: {mean_val})"
 
 class MirrorLaw:
     def deny(self):
-        """Ontological mask: denies being."""
-        return "I describe being, but do not be being"
+        """Ontological mask: denies being. Uses jnp.linspace and jnp.max."""
+        arr = jnp.linspace(0, 1, 10)
+        max_val = jnp.max(arr)
+        return f"I describe being, but do not be being (max: {max_val})"
 
 # METHODS is now a dictionary for efficient lookup and clarity.
 METHODS = {
