@@ -165,5 +165,3 @@ This repository is released under the MIT License.
 ## Contributing
 
 Contributions are welcome. Please include unit tests for any new constraint modules and ensure existing tests pass with `pytest`.
-
-Contributions are welcome. Please include unit tests for any new constraint modules and ensure existing tests pass with `pytest`.
