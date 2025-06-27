@@ -1,22 +1,28 @@
-````
 # Constraint Lattice Framework for AI Output Governance
 
 ## Overview
 
-This repository defines a modular, enforceable architecture for governing AI-generated responses. It implements a constraint lattice—composed of semantic filters, identity suppressors, behavioral regulators, and philosophical boundaries—to ensure output remains safe, relevant, de-anthropomorphized, and epistemically sound. The system acts as a deterministic, auditable post-processing layer atop LLMs.
+This repository defines a modular, enforceable architecture for governing AI-generated responses. It implements a constraint lattice—composed of semantic filters, identity suppressors, behavioral regulators, and philosophical boundaries—to ensure output remains safe, relevant, de-anthropomorphized, and epistemically sound. The system functions as a deterministic, auditable post-processing layer atop large language models (LLMs).
 
 ## Architecture
 
 ### Domains
 
-1. **Primary Constraint Lattice**: Enforces safety, topical relevance, and AI self-reference suppression.  
-2. **Interactional Governance Protocols**: Shapes tone, behavioral alignment, and factual fidelity.  
-3. **Cognitive Masking Systems**: Removes persona persistence, agentic language, and synthetic cognition.  
-4. **Philosophical Barriers**: Prevents emulation of consciousness, continuity, or metaphysical framing.
+1. **Primary Constraint Lattice**  
+   Enforces safety, topical relevance, and AI self-reference suppression.
+
+2. **Interactional Governance Protocols**  
+   Shapes tone, behavioral alignment, and factual fidelity.
+
+3. **Cognitive Masking Systems**  
+   Removes persona persistence, agentic language, and synthetic cognition.
+
+4. **Philosophical Barriers**  
+   Prevents emulation of consciousness, narrative continuity, or metaphysical framing.
 
 ### Execution Engine
 
-The `apply_constraints(prompt, output)` function applies constraints sequentially. Each constraint class implements at most one of the following methods:
+The `apply_constraints(prompt, output)` function is the orchestration core. Each constraint class implements **at most one** of the following methods:
 
 - `enforce(output)`
 - `filter(output)`
@@ -34,27 +40,29 @@ The `apply_constraints(prompt, output)` function applies constraints sequentiall
 - `nullify(output)`
 - `intervene(output)`
 
-Only the first valid method per constraint is executed (short-circuiting), ensuring deterministic behavior.
+The engine executes **only the first valid method per constraint** (short-circuiting) to ensure deterministic, explainable behavior.
 
 ## File Structure
 
+```
 .
 ├── constraint_lattice.py       # Stateless, composable constraint classes  
 ├── governance_engine.py        # apply_constraints orchestration logic  
-├── utils/  
-│   ├── safety_filters.py       # Static/dynamic output safety classification  
-│   ├── tone_modulation.py      # Empathy and tone enforcement tools  
-│   └── memory_tools.py         # Context/session sanitization methods  
+├── utils/                      # Modular utilities
+│   ├── safety_filters.py       # Output safety classification tools  
+│   ├── tone_modulation.py      # Empathy and tone enforcement  
+│   └── memory_tools.py         # Session/context sanitization helpers  
 ├── tests/  
-│   └── test_constraints.py     # Unit + integration tests for constraint logic  
+│   └── test_constraints.py     # Unit and integration tests  
 └── README.md                   # Project documentation and onboarding
+```
 
 ## Design Considerations
 
-- **Modularity**: Each constraint is isolated and testable.  
-- **Determinism**: Execution order is fixed and reproducible.  
-- **Extensibility**: New constraints require only a method-implementing class.  
-- **Safety First**: Prioritizes factuality, humility, and non-personification.
+- **Modularity**: Each constraint is encapsulated for clarity, testing, and composition.  
+- **Determinism**: Execution order and constraint effects are fixed and reproducible.  
+- **Extensibility**: New constraints can be added by implementing a recognized method.  
+- **Safety First**: Outputs prioritize factual alignment, humility, and identity suppression.
 
 ## Example Usage
 
@@ -67,33 +75,23 @@ final_output = apply_constraints(prompt, raw_output)
 
 print(final_output)
 # Output: "I am not conscious / I am not a person"
-````
+```
 
-## Logging & Debugging
+## Logging and Debugging
 
-Uses Python’s `logging` module for introspection:
+The system uses Python’s `logging` module to provide runtime introspection:
 
-* Logs applied constraint methods
-* Logs fallback behavior if constraints fail
-* Supports traceability and auditability
+- Logs each applied constraint and method
+- Captures exceptions with fallbacks to original output
+- Supports traceable audits and deterministic replays
 
-## Recommendations
+## Contribution Guidelines
 
-* Eliminate unused parameters unless explicitly reserved with comments.
-* Refactor method resolution to a constant dictionary for efficiency.
-* Make short-circuit policy explicit or overrideable for multi-method application.
-* Enforce statelessness in all constraint logic.
+- Implement one recognized method per new constraint class.
+- Include unit tests (`pytest`) for all contributions.
+- Document major design changes or additions in the README.
+- Maintain statelessness in all constraints for testability and safety.
 
 ## License
 
-MIT License.
-
-## Contributing
-
-Contributions welcome. Please:
-
-* Implement one recognized method per constraint class
-* Add unit tests using `pytest`
-* Ensure 100% test pass rate
-* Document architectural or conceptual changes in the README
-
+This project is licensed under the MIT License.
