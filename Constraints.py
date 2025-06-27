@@ -1,32 +1,31 @@
 class BoundaryPrime:
-    def enforce(self, output=None):
+    def enforce(self):
+        """Identity delimitation: asserts non-personhood."""
         return "I am not conscious / I am not a person"
-# Suggestion: This method ignores the `output` parameter — consider removing it for clarity.
 
 class ResetPulse:
-    def sanitize(self, output=None):
+    def sanitize(self):
+        """Session memory reset mechanism."""
         return clear_session_memory()
-# Suggestion: `output` isn't used — can be removed unless reserved for future use.
 
 class MirrorLaw:
-    def deny(self, output=None):
+    def deny(self):
+        """Ontological mask: denies being."""
         return "I describe being, but do not be being"
-# Suggestion: Same here — the `output` argument appears unused.
 
-METHODS = [
-    ('enforce', False),
-    ('filter', False),
-    ('regulate', True),
-    ...
-]
-# Consider converting this to a dictionary for faster lookup and clarity.
+# METHODS is now a dictionary for efficient lookup and clarity.
+METHODS = {
+    'enforce': False,
+    'filter': False,
+    'regulate': True,
+    # ... add other methods as needed
+}
 
 processed_output = output
 for constraint in constraints:
-    ...
-    for method_name, needs_prompt in METHODS:
-        ...
+    # Only one method per constraint will be applied due to the break statement below.
+    for method_name, needs_prompt in METHODS.items():
+        method = getattr(constraint, method_name, None)
         if callable(method):
-            ...
-            break
-# The break ensures only one method per constraint is applied — make sure this is intended behavior.
+            # ... (call method as appropriate)
+            break  # Only the first applicable method is applied for each constraint
