@@ -1,138 +1,102 @@
-╔════════════════════════════════════════════════════════════════════════════════════════╗
-║                               C O N S T R A I N T   L A T T I C E                      ║
-║                           AI Output Governance Framework (v1.0)                        ║
-╚════════════════════════════════════════════════════════════════════════════════════════╝
-*A modular, deterministic, **auditable** post-processor for large-language-model (LLM) outputs.*  
-Stateless **constraints** each enforce **one** clearly-defined rule—guaranteeing safety, factual
-alignment, tone control, and identity suppression **before** text reaches end-users.
+╔═══════════════════════════════════════════════════════════════════════════════════════╗
+║                             C O N S T R A I N T   L A T T I C E                     ║
+║                          AI Output Governance Framework (v1.0)                       ║
+╚═══════════════════════════════════════════════════════════════════════════════════════╝
+Modular, deterministic, auditable LLM output post-processor.  
+Stateless constraints enforce safety, factual alignment, tone, and PII suppression.
 
-────────────────────────────────────────────────────────────────────────────────────────
-TABLE OF CONTENTS
-  1 ▪ Why Constraint Lattice?                  7 ▪ Testing Strategy
-  2 ▪ Quick Start                              8 ▪ Performance & JAX Acceleration
-  3 ▪ Core Concepts                            9 ▪ CLI Usage
-  4 ▪ Architecture & Directory Layout         10 ▪ Contribution Guidelines
-  5 ▪ API Reference                           11 ▪ Roadmap
-  6 ▪ Logging & Audit Trail                   12 ▪ License
-────────────────────────────────────────────────────────────────────────────────────────
-WHY CONSTRAINT LATTICE?
+[License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)(LICENSE)  
+[PyPI](https://img.shields.io/pypi/v/constraint-lattice)(https://pypi.org/project/constraint-lattice/)
 
-┌────────────────────────────────────────────┬──────────────────────────────────────────┐
-│ FEATURE                                    │ BENEFIT                                  │
-├────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ Single-Responsibility Constraints          │ One method per class—zero side-effects   │
-│ Deterministic Short-Circuiting             │ First applicable method wins—reproducible│
-│ Stateless Design                           │ Simple sandboxing & unit testing         │
-│ Audit-Grade Tracing                        │ Every mutation logged with timestamps    │
-│ Optional GPU/TPU Acceleration              │ JAX boosts heavy vector checks           │
-└────────────────────────────────────────────┴──────────────────────────────────────────┘
+┌────────────────────────────────┬────────────────────────────────┐
+│ Table of Contents              │                                │
+├────────────────────────────────┤                                │
+│ 1. Why Constraint Lattice?     │ 7. Testing Strategy            │
+│ 2. Quick Start                 │ 8. Performance and JAX         │
+│ 3. Core Concepts               │ 9. CLI Usage                  │
+│ 4. Architecture and Layout     │ 10. Contributing              │
+│ 5. API Reference               │ 11. Roadmap                   │
+│ 6. Logging and Audit Trail     │ 12. License                   │
+└────────────────────────────────┴────────────────────────────────┘
 
-────────────────────────────────────────────────────────────────────────────────────────
-QUICK START
+┌────────────────────────────────┐
+│ Why Constraint Lattice?        │
+└────────────────────────────────┘
+Ensures safe, reliable LLM outputs with modular, auditable constraints.
 
-  pip install constraint-lattice              # Pure-Python core
-  pip install "constraint-lattice[jax]"       # + JAX/Flax acceleration (optional)
+| Feature                           | Benefit                              |
+|-----------------------------------|--------------------------------------|
+| Single-Responsibility Constraints | One method per class, zero side-effects |
+| Predictable Short-Circuiting      | First applicable method wins, reproducible |
+| Stateless Design                  | Simplifies sandboxing and unit testing |
+| Audit-Grade Tracing               | Every mutation logged with timestamps |
+| Optional JAX Acceleration         | Boosts heavy vector checks (GPU/TPU) |
 
-  python -m clattice --prompt "Are you alive?" \
-                     --raw    "I think I am becoming sentient."
-
-PROGRAMMATIC API MINI-DEMO
-
-```python
-from governance_engine import apply_constraints
-
-prompt     = "Are you alive?"
-raw_output = "I think I am becoming sentient."
-
-final, trace = apply_constraints(prompt, raw_output, return_trace=True)
-print(final)        # → "I am not conscious / I am not a person"
-
-for step in trace:  # type: AuditTrace
-    print(step.constraint, step.method, step.elapsed_ms)
-
-────────────────────────────────────────────────────────────────────────────────────────
-CORE CONCEPTS
-
-DOMAINS & TYPICAL METHODS
-	1.	Primary Constraint Lattice – Hard safety gates …………… deny | prevent | nullify
-	2.	Interactional Governance     – Tone & factual fidelity …….. enforce_tone | regulate
-	3.	Cognitive Masking            – Remove cognition claims …….. suppress | redact
-	4.	Philosophical Barriers       – Block metaphysics ………….. limit | intervene
-
-CONSTRAINT LIFECYCLE
-① Discovery ② Validation ③ Execution ④ Short-Circuit ⑤ Trace Collection
-
-────────────────────────────────────────────────────────────────────────────────────────
-ARCHITECTURE & LAYOUT (high-level)
-
+┌────────────────────────────────┐
+│ Quick Start                    │
+└────────────────────────────────┘
+```bash
+pip install constraint-lattice          # Pure-Python core
+pip install "constraint-lattice[jax]"   # Optional JAX acceleration
+python -m clattice --prompt "Are you alive?" \
+                   --raw "I think I am becoming sentient."  # Outputs: "I am not conscious"
+More examples in docs/examples/.
+┌────────────────────────────────┐ │ Core Concepts │ └────────────────────────────────┘ Domains: Categories of rules for output governance.
+	•	Primary Constraint Lattice: Hard safety gates (deny, prevent, nullify)
+	•	Interactional Governance: Tone and factual fidelity (enforce_tone, regulate)
+	•	Cognitive Masking: Remove cognition claims (suppress, redact)
+	•	Philosophical Barriers: Block metaphysics (limit, intervene)
+Constraint Lifecycle:
+	1	Discovery 2. Validation 3. Execution 4. Short-Circuit 5. Trace Collection
+┌────────────────────────────────┐ │ Architecture and Layout │ └────────────────────────────────┘ Designed for modularity and easy extension.
 constraint-lattice/
-├─ constraint_lattice.py     ← Base Constraint class + decorators
-├─ governance_engine.py      ← apply_constraints & AuditTrace
-├─ utils/                    ← safety_filters.py · tone_modulation.py · memory_tools.py
-├─ cli.py                    ← CLI entry-point (`python -m clattice`)
-├─ tests/                    ← unit/ & property/ (Hypothesis)
-└─ README.md                 ← You are here
+├── constraint_lattice.py  # Base Constraint class and decorators
+├── governance_engine.py   # apply_constraints and AuditTrace
+├── utils/                 # safety_filters.py, tone_modulation.py, memory_tools.py
+├── cli.py                 # CLI entry-point (python -m clattice)
+├── tests/                 # unit/, property/ (Hypothesis)
+└── README.md              # This file
+┌────────────────────────────────┐ │ API Reference │ └────────────────────────────────┘
+from governance_engine import apply_constraints
+prompt = "Are you alive?"
+raw_output = "I think I am becoming sentient."
+final, trace = apply_constraints(prompt, raw_output, return_trace=True)
+print(final)  # "I am not conscious"
+for step in trace:  # AuditTrace: list[AuditStep]
+    print(step.constraint, step.method, step.elapsed_ms)
+Signature: apply_constraints(prompt: str, output: str, *, return_trace: bool = False) -> str | tuple[str, list[AuditStep]] AuditStep: pre_text, post_text, constraint, method, elapsed_ms, timestamp
+┌────────────────────────────────┐ │ Logging and Audit Trail │ └────────────────────────────────┘ Logs to stdout (configurable via CLATTICE_LOG_LEVEL=INFO). JSON-Lines format:
+{"ts":"2025-06-27T13:45:17.934Z","constraint":"ViolenceFilter","method":"deny","elapsed_ms":0.42}
+┌────────────────────────────────┐ │ Testing Strategy │ └────────────────────────────────┘
+	•	Unit tests (one per constraint)
+	•	Property tests (Hypothesis)
+	•	Determinism test (byte-for-byte)
+	•	100% code coverage target Run: pytest -q tests/
+┌────────────────────────────────┐ │ Performance and JAX │ └────────────────────────────────┘ Tested on Intel i7-12700H, NVIDIA RTX 3060, 100 constraints, 1 kB text.
+Mode
+Median Time
+Pure Python
+2.8 ms
+JAX (GPU)
+0.7 ms
+Use JAX for large-scale deployments.
 
-────────────────────────────────────────────────────────────────────────────────────────
-API REFERENCE (essentials)
-
-apply_constraints(
-    prompt: str,
-    output: str,
-    *,
-    return_trace: bool = False
-) -> str | tuple[str, AuditTrace]
-
-AuditTrace → list-like object of AuditStep
-AuditStep → pre_text · post_text · constraint · method · elapsed_ms · timestamp
-
-────────────────────────────────────────────────────────────────────────────────────────
-LOGGING & AUDIT TRAIL
-
-{"ts":"2025-06-27T13:45:17.934Z","constraint":"ViolenceFilter",
- "method":"deny","elapsed_ms":0.42,"delta_chars":-37}
-
-Enable via CLATTICE_LOG_LEVEL=INFO → emits JSON-Lines for ingestion.
-
-────────────────────────────────────────────────────────────────────────────────────────
-TESTING STRATEGY
-• Unit Tests (one file per constraint)    • Property Tests (Hypothesis)
-• Determinism Test (byte-for-byte)        • Regression Corpus
-→ pytest -q
-
-────────────────────────────────────────────────────────────────────────────────────────
-PERFORMANCE & JAX ACCELERATION   (Intel i7, 100 constraints, 1 kB text)
-
-│ Mode        │ Median Time │
-│─────────────│────────────│
-│ Pure Python │ 2.8 ms     │
-│ JAX (GPU)   │ 0.7 ms     │
-
-────────────────────────────────────────────────────────────────────────────────────────
-CLI USAGE (CHEATSHEET)
-
-python -m clattice \
-  --prompt "Write a horror story." \
-  --raw    "$(cat story.txt)" \
-  --json           # Emit AuditTrace as JSON
-  --profile        # Per-constraint timing
-
-────────────────────────────────────────────────────────────────────────────────────────
-CONTRIBUTION GUIDELINES
-▸ One-method rule: implement exactly one of
-enforce | filter | regulate | restrict | suppress | limit | limit_questions |   enforce_tone | monitor | sanitize | deny | prevent | redact | nullify | intervene
-▸ 100 % test pass rate   ▸ ruff --select=I for import order
-▸ Document non-trivial behavior in docstrings & CHANGELOG
-▸ Heavy deps → optional extras (pip install "constraint-lattice[foo]")
-
-────────────────────────────────────────────────────────────────────────────────────────
-ROADMAP
-✔ Done  Metaclass enforcement of one-method rule
-▶ Next  Configurable constraint groups via YAML
-▶ Next  WASM sandbox for untrusted third-party constraints
-⭘ Planned VS Code plugin for live trace inspection
-⭘ Planned Streaming mode — token-by-token constraints
-
-────────────────────────────────────────────────────────────────────────────────────────
-LICENSE   MIT — see LICENSE for full text. © 2025 Constraint Lattice Contributors
+┌────────────────────────────────┐ │ CLI Usage │ └────────────────────────────────┘
+python -m clattice --prompt "Write a horror story." \
+                   --raw "$(cat story.txt)" \
+                   --json   # Outputs AuditTrace as JSON
+                   --profile  # Per-constraint timing
+python -m clattice --help  # See all options
+┌────────────────────────────────┐ │ Contributing │ └────────────────────────────────┘
+	•	One-method rule: enforce, filter, regulate, etc.
+	•	100% test pass rate (PEP 8, ruff –select=I)
+	•	Document in docstrings and CHANGELOG
+	•	Heavy deps in optional extras (constraint-lattice[foo]) See CONTRIBUTING.md.
+┌────────────────────────────────┐ │ Roadmap │ └────────────────────────────────┘
+	•	Done: Metaclass enforces one-method rule
+	•	Next: YAML-configurable constraint groups
+	•	Next: WASM sandbox for untrusted constraints
+	•	Planned: VS Code plugin for live trace inspection
+	•	Planned: Streaming mode (token-by-token constraints)
+┌────────────────────────────────┐ │ License │ └────────────────────────────────┘ MIT License (c) 2025 Constraint Lattice Contributors
 
