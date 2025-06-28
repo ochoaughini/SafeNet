@@ -197,5 +197,3 @@ python -m clattice \
 
 MIT — see `LICENSE` for full text.  
 © 2025 Constraint Lattice Contributors.
-
-Sources
