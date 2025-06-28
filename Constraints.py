@@ -1,5 +1,8 @@
 # JAX is used for high-performance, differentiable numerical operations
-import jax.numpy as jnp
+try:
+    import jax.numpy as jnp
+except Exception:  # pragma: no cover - optional dependency
+    import numpy as jnp
 
 class BoundaryPrime:
     def enforce(self):

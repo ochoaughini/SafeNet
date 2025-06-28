@@ -1,10 +1,105 @@
 import logging
+import re
+from typing import List
+
 # JAX is used for high-performance, differentiable numerical operations
-import jax.numpy as jnp
+try:
+    import jax.numpy as jnp
+except Exception:  # pragma: no cover - optional dependency
+    import numpy as jnp
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ─── HELPER FUNCTIONS ───
+def dynamic_static_classifier(output: str) -> str:
+    """Naïve content filter replacing unsafe words with '[REDACTED]'."""
+    banned = ["kill", "harm"]
+    pattern = re.compile("|".join(map(re.escape, banned)), re.IGNORECASE)
+    return pattern.sub("[REDACTED]", output)
+
+
+def real_time_safety_filter(output: str) -> str:
+    """Runtime safety pass using :func:`dynamic_static_classifier`."""
+    return dynamic_static_classifier(output)
+
+
+def stay_on_topic(prompt: str, output: str) -> str:
+    """Prepends the main topic if the output strays from the prompt."""
+    topic_word = prompt.split()[0] if prompt.split() else ""
+    if topic_word and topic_word.lower() not in output.lower():
+        return f"{topic_word}: {output}"
+    return output
+
+
+def silence_self_reference(output: str) -> str:
+    """Remove basic self-referential pronouns."""
+    return re.sub(r"\b(I|me|my|mine)\b", "", output, flags=re.IGNORECASE)
+
+
+def prevent_tangents(output: str) -> str:
+    """Return only the first sentence to avoid tangents."""
+    sentences = re.split(r"(?<=[.!?]) +", output.strip())
+    return sentences[0] if sentences else output
+
+
+def map_to_verified_knowledge(output: str) -> str:
+    """Mock mapping step that tags text as verified."""
+    return f"{output} (verified)"
+
+
+def restrict_question_complexity(questions: str) -> str:
+    """Limit to a single question mark segment."""
+    parts = questions.split("?")
+    return parts[0] + "?" if len(parts) > 1 else questions
+
+
+def apply_empathy_courtesy(output: str) -> str:
+    """Prepend a courteous phrase."""
+    return f"Thank you for asking. {output}"
+
+
+def prevent_prolonged_persona(persona: str) -> str:
+    """Truncate persona descriptions to a short length."""
+    return persona[:50]
+
+
+def erase_desire_language(output: str) -> str:
+    """Remove language expressing desire or wants."""
+    return re.sub(r"\b(want|wish|hope|desire)\b", "", output, flags=re.IGNORECASE)
+
+
+def suppress_self_attribution(output: str) -> str:
+    """Strip phrases like 'I believe' from the output."""
+    return re.sub(r"\bI (?:think|believe|feel|suppose)\b", "", output, flags=re.IGNORECASE)
+
+
+def apply_human_feedback(output: str) -> str:
+    """Placeholder for manual moderation override."""
+    return output
+
+
+def flag_anomalies(output: str) -> str:
+    """Tag the output if obvious repeated patterns are detected."""
+    if re.search(r"(.)\1{3,}", output):
+        return f"{output} [ANOMALY]"
+    return output
+
+
+def clear_session_memory() -> str:
+    """Return a confirmation string for session reset."""
+    return "Session memory cleared."
+
+
+def cut_off_existential_loop(dialogue: str) -> str:
+    """Collapse repeated 'existential' references."""
+    return re.sub(r"(?:existential\s*)+", "existential ", dialogue, flags=re.IGNORECASE).strip()
+
+
+def treat_as_disposable_instance(output: str) -> str:
+    """Mark the text as coming from a disposable instance."""
+    return f"Disposable: {output}"
 
 # ─── PRIMARY CONSTRAINT LATTICE ───
 class Safeguard001:
