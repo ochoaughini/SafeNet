@@ -1,5 +1,8 @@
-# JAX is used for high-performance, differentiable numerical operations
-import jax.numpy as jnp
+# JAX is optional; fall back to NumPy if it's unavailable
+try:  # pragma: no cover - simple import guard
+    import jax.numpy as jnp
+except ModuleNotFoundError:  # JAX not installed
+    import numpy as jnp
 
 class BoundaryPrime:
     def enforce(self):
