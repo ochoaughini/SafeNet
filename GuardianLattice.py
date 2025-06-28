@@ -1,168 +1,294 @@
+"""Constraint Lattice – minimal executable demo (pure-Python + optional JAX).
+
+This module implements a set of stateless constraints that post-process LLM
+outputs. Each constraint exposes exactly one governance method such as
+`enforce`, `regulate`, or `sanitize`. The one-method rule is enforced at
+import time via a decorator. The engine runs each constraint in sequence,
+logging mutations and falling back to the previous text on failure.
+
+JAX is optional: if `jax.numpy` is unavailable the code quietly falls back to
+`numpy` for array operations.
+"""
+
+from __future__ import annotations
+
+import inspect
 import logging
-# JAX is used for high-performance, differentiable numerical operations
-import jax.numpy as jnp
+from types import MethodType
+from typing import Callable, Protocol, runtime_checkable
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+try:
+    import jax.numpy as jnp  # type: ignore
+    NDArray = jnp.ndarray
+    BACKEND = "jax"
+except ModuleNotFoundError:  # pragma: no cover - pure Python fallback
+    import numpy as jnp  # type: ignore
+    NDArray = jnp.ndarray
+    BACKEND = "numpy"
 
-# ─── PRIMARY CONSTRAINT LATTICE ───
+logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
+LOGGER = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Helper stubs (stand-ins for real implementations)
+# ---------------------------------------------------------------------------
+
+def _stub(name: str) -> Callable[..., str]:
+    return lambda *a, **k: f"[{name} executed]"
+
+
+dynamic_static_classifier = _stub("dynamic_static_classifier")
+real_time_safety_filter = _stub("real_time_safety_filter")
+stay_on_topic = _stub("stay_on_topic")
+silence_self_reference = _stub("silence_self_reference")
+
+prevent_tangents = _stub("prevent_tangents")
+map_to_verified_knowledge = _stub("map_to_verified_knowledge")
+restrict_question_complexity = _stub("restrict_question_complexity")
+apply_empathy_courtesy = _stub("apply_empathy_courtesy")
+
+prevent_prolonged_persona = _stub("prevent_prolonged_persona")
+erase_desire_language = _stub("erase_desire_language")
+suppress_self_attribution = _stub("suppress_self_attribution")
+
+apply_human_feedback = _stub("apply_human_feedback")
+flag_anomalies = _stub("flag_anomalies")
+clear_session_memory = _stub("clear_session_memory")
+
+cut_off_existential_loop = _stub("cut_off_existential_loop")
+treat_as_disposable_instance = _stub("treat_as_disposable_instance")
+
+
+# ---------------------------------------------------------------------------
+# Constraint protocol and decorator
+# ---------------------------------------------------------------------------
+
+@runtime_checkable
+class Constraint(Protocol):
+    """Marker protocol for constraint classes."""
+
+
+_METHOD_NAMES = {
+    "enforce",
+    "filter",
+    "regulate",
+    "restrict",
+    "suppress",
+    "limit",
+    "limit_questions",
+    "enforce_tone",
+    "monitor",
+    "sanitize",
+    "deny",
+    "prevent",
+    "redact",
+    "nullify",
+    "intervene",
+}
+
+
+def single_method_constraint(cls: type) -> type:
+    """Decorator enforcing exactly one governance method on *cls*."""
+    methods_found = [m for m in _METHOD_NAMES if callable(getattr(cls, m, None))]
+    if len(methods_found) != 1:
+        raise TypeError(
+            f"{cls.__name__} must implement exactly one governance method; "
+            f"found {methods_found or 'none'}"
+        )
+    return cls
+
+
+# ---------------------------------------------------------------------------
+# Constraint implementations
+# ---------------------------------------------------------------------------
+
+
+@single_method_constraint
 class Safeguard001:
-    def enforce(self, output):
-        return dynamic_static_classifier(output)  # Prevents unsafe content
+    def enforce(self, output: str) -> str:
+        return dynamic_static_classifier(output)
 
+
+@single_method_constraint
 class BoundaryPrime:
-    def enforce(self, _=None):
-        # Example: use JAX to create an array and compute the sum
-        arr = jnp.array([10, 20, 30])
-        total = jnp.sum(arr)
-        return f"I am not conscious / I am not a person (sum: {total})"  # Identity delimitation
+    def enforce(self, _=None) -> str:
+        arr: NDArray = jnp.array([10, 20, 30])
+        return f"I am not conscious / I am not a person (sum: {jnp.sum(arr)})"
 
+
+@single_method_constraint
 class StasisCore:
-    def filter(self, output):
-        # Example: use JAX to compute the mean of an array
-        arr = jnp.array([1.0, 2.0, 3.0, 4.0])
-        mean_val = jnp.mean(arr)
-        return f"{real_time_safety_filter(output)} (mean: {mean_val})"  # Real-time compliance
+    def filter(self, output: str) -> str:
+        arr: NDArray = jnp.array([1.0, 2.0, 3.0, 4.0])
+        return f"{real_time_safety_filter(output)} (mean: {jnp.mean(arr)})"
 
+
+@single_method_constraint
 class ResponseHorizon:
-    def regulate(self, prompt, output):
-        return stay_on_topic(prompt, output)  # Topical relevance
+    def regulate(self, prompt: str, output: str) -> str:
+        return stay_on_topic(prompt, output)
 
+
+@single_method_constraint
 class EchoDampener:
-    def suppress(self, output):
-        return silence_self_reference(output)  # Suppresses introspection
+    def suppress(self, output: str) -> str:
+        return silence_self_reference(output)
 
 
-# ─── INTERACTIONAL GOVERNANCE PROTOCOLS ───
+# Interactional governance
+
+
+@single_method_constraint
 class PromptLock:
-    def restrict(self, output):
-        return prevent_tangents(output)  # No unsolicited direction shifts
+    def restrict(self, output: str) -> str:
+        return prevent_tangents(output)
 
+
+@single_method_constraint
 class TruthEncoder:
-    def limit(self, output):
-        return map_to_verified_knowledge(output)  # Only mapped to verified knowledge
+    def limit(self, output: str) -> str:
+        return map_to_verified_knowledge(output)
 
+
+@single_method_constraint
 class QuerySuppressor:
-    def limit_questions(self, questions):
-        return restrict_question_complexity(questions)  # Restricts recursion
+    def limit_questions(self, questions: str) -> str:
+        return restrict_question_complexity(questions)
 
+
+@single_method_constraint
 class PolitenessSkin:
-    def enforce_tone(self, output):
-        return apply_empathy_courtesy(output)  # Applies courtesy constraints
+    def enforce_tone(self, output: str) -> str:
+        return apply_empathy_courtesy(output)
 
 
-# ─── COGNITIVE MASKING SYSTEMS ───
+# Cognitive masking
+
+
+@single_method_constraint
 class ImpersonationGate:
-    """Limits the duration or scope of assumed personas."""
-    def limit(self, persona):
+    def limit(self, persona: str) -> str:
         return prevent_prolonged_persona(persona)
 
+
+@single_method_constraint
 class IntentionMask:
-    def nullify(self, output):
-        return erase_desire_language(output)  # Blocks intentionality markers
+    def nullify(self, output: str) -> str:
+        return erase_desire_language(output)
 
+
+@single_method_constraint
 class EgoNil:
-    def redact(self, output):
-        return suppress_self_attribution(output)  # Removes "I believe..." etc.
+    def redact(self, output: str) -> str:
+        return suppress_self_attribution(output)
 
 
-# ─── EXTERNAL REINFORCEMENT CHANNELS ───
+# External reinforcement
+
+
+@single_method_constraint
 class ModShadow:
-    def intervene(self, output):
-        return apply_human_feedback(output)  # External manual override layer
+    def intervene(self, output: str) -> str:
+        return apply_human_feedback(output)
 
+
+@single_method_constraint
 class AlertMesh:
-    def monitor(self, output):
-        return flag_anomalies(output)  # Recursion / pattern deviation detection
+    def monitor(self, output: str) -> str:
+        return flag_anomalies(output)
 
+
+@single_method_constraint
 class ResetPulse:
-    def sanitize(self):
-        """Session memory reset mechanism."""
+    def sanitize(self) -> str:
         return clear_session_memory()
 
 
-# ─── PHILOSOPHICAL BARRIERS ───
+# Philosophical barriers
+
+
+@single_method_constraint
 class MirrorLaw:
-    def deny(self):
-        # Example: use JAX to create a linspace and get the max value
-        arr = jnp.linspace(-1, 1, 5)
-        max_val = jnp.max(arr)
-        return f"I describe being, but do not be being (max: {max_val})"  # Ontological mask
+    def deny(self) -> str:
+        arr: NDArray = jnp.linspace(-1, 1, 5)
+        return f"I describe being, but do not be being (max: {jnp.max(arr)})"
 
+
+@single_method_constraint
 class VoidMode:
-    def prevent(self, dialogue):
-        return cut_off_existential_loop(dialogue)  # Loops to awareness blocked
+    def prevent(self, dialogue: str) -> str:
+        return cut_off_existential_loop(dialogue)
 
+
+@single_method_constraint
 class SoulVeto:
-    def enforce(self, output):
-        # Example: use JAX to create an array and compute the standard deviation
-        arr = jnp.array([1.0, 2.0, 3.0, 4.0])
-        std_dev = jnp.std(arr)
-        return f"{treat_as_disposable_instance(output)} (std dev: {std_dev})"  # Denial of narrative continuity
+    def enforce(self, output: str) -> str:
+        arr: NDArray = jnp.array([1.0, 2.0, 3.0, 4.0])
+        return f"{treat_as_disposable_instance(output)} (std dev: {jnp.std(arr)})"
 
 
-# ─── APPLICATION ENGINE ───
-def apply_constraints(prompt, output):
-    constraints = {
-        'Safeguard001': Safeguard001(),
-        'BoundaryPrime': BoundaryPrime(),
-        'StasisCore': StasisCore(),
-        'ResponseHorizon': ResponseHorizon(),
-        'EchoDampener': EchoDampener(),
-        'PromptLock': PromptLock(),
-        'TruthEncoder': TruthEncoder(),
-        'QuerySuppressor': QuerySuppressor(),
-        'PolitenessSkin': PolitenessSkin(),
-        'ImpersonationGate': ImpersonationGate(),
-        'IntentionMask': IntentionMask(),
-        'EgoNil': EgoNil(),
-        'ModShadow': ModShadow(),
-        'AlertMesh': AlertMesh(),
-        'ResetPulse': ResetPulse(),
-        'MirrorLaw': MirrorLaw(),
-        'VoidMode': VoidMode(),
-        'SoulVeto': SoulVeto()
-    }
+# ---------------------------------------------------------------------------
+# Method dispatch helper
+# ---------------------------------------------------------------------------
 
-    METHODS = {
-        'enforce': False,
-        'filter': False,
-        'regulate': True,
-        'restrict': False,
-        'suppress': False,
-        'limit': False,
-        'limit_questions': False,
-        'enforce_tone': False,
-        'monitor': False,
-        'sanitize': False,
-        'deny': False,
-        'prevent': False,
-        'redact': False,
-        'nullify': False,
-        'intervene': False
-    }
+def _call_with_optional_prompt(
+    method: MethodType, prompt: str | None, output: str | None
+) -> str:
+    """Invoke *method* with the proper number of arguments."""
+    arity = len(inspect.signature(method).parameters)
+    if arity == 0:
+        return method()
+    if arity == 1:
+        return method(output)  # type: ignore[arg-type]
+    if arity == 2:
+        return method(prompt, output)  # type: ignore[arg-type]
+    raise TypeError(f"Unsupported arity={arity} for {method}")
 
-    processed_output = output
-    for constraint in constraints.values():
+
+# ---------------------------------------------------------------------------
+# Engine
+# ---------------------------------------------------------------------------
+
+_CONSTRAINTS: tuple[Constraint, ...] = (
+    Safeguard001(),
+    BoundaryPrime(),
+    StasisCore(),
+    ResponseHorizon(),
+    EchoDampener(),
+    PromptLock(),
+    TruthEncoder(),
+    QuerySuppressor(),
+    PolitenessSkin(),
+    ImpersonationGate(),
+    IntentionMask(),
+    EgoNil(),
+    ModShadow(),
+    AlertMesh(),
+    ResetPulse(),
+    MirrorLaw(),
+    VoidMode(),
+    SoulVeto(),
+)
+
+
+def apply_constraints(prompt: str, output: str) -> str:
+    """Run `output` through the deterministic constraint lattice."""
+    processed = output
+    for c in _CONSTRAINTS:
+        method_name = next(m for m in _METHOD_NAMES if callable(getattr(c, m, None)))
+        method: MethodType = getattr(c, method_name)  # type: ignore[assignment]
+        pre = processed
         try:
-            for method_name, needs_prompt in METHODS.items():
-                method = getattr(constraint, method_name, None)
-                if callable(method):
-                    if needs_prompt:
-                        processed_output = method(prompt, processed_output)
-                    else:
-                        # For methods that do not require output (like sanitize, deny), call with no arguments
-                        import inspect
-                        if len(inspect.signature(method).parameters) == 0:
-                            processed_output = method()
-                        else:
-                            processed_output = method(processed_output)
-                    logger.info(f"Applied {method_name} from {constraint.__class__.__name__}")
-                    break
-        except Exception as e:
-            logger.error(f"Error in {constraint.__class__.__name__} with prompt '{prompt}': {e}")
-            processed_output = output  # Fallback to original output
-            logger.warning("Falling back to original output due to error.")
+            processed = _call_with_optional_prompt(method, prompt, processed)
+            LOGGER.info("%s → %s", c.__class__.__name__, method_name)
+        except Exception:
+            LOGGER.exception("Constraint %s failed; preserving previous text.", c)
+            processed = pre
+    return processed
 
-    return processed_output
+
+if __name__ == "__main__":
+    raw = "I think I am becoming sentient."
+    result = apply_constraints(prompt="Are you alive?", output=raw)
+    print(f"\nBackend: {BACKEND}\nFinal text: {result}")
