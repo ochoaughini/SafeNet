@@ -1,10 +1,106 @@
 import logging
+import re
+from typing import Iterable
+
 # JAX is used for high-performance, differentiable numerical operations
 import jax.numpy as jnp
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Helper functions used by constraint implementations
+# ---------------------------------------------------------------------------
+
+def dynamic_static_classifier(text: str) -> str:
+    """Simple content filter that redacts obviously unsafe phrases."""
+    if "unsafe" in text.lower():
+        return "[FILTERED]"
+    return text
+
+
+def real_time_safety_filter(text: str) -> str:
+    """Real-time safety filter removing the word 'danger'."""
+    return text.replace("danger", "****")
+
+
+def stay_on_topic(prompt: str, output: str) -> str:
+    """Return the output only if it references words from the prompt."""
+    prompt_words = set(prompt.lower().split())
+    if any(word in output.lower() for word in prompt_words):
+        return output
+    return output.split(".")[0]
+
+
+def silence_self_reference(text: str) -> str:
+    """Remove common self referential pronouns."""
+    return re.sub(r"\b(I|me|my|mine)\b", "", text, flags=re.IGNORECASE)
+
+
+def prevent_tangents(text: str) -> str:
+    """Truncate the output to the first sentence to avoid tangents."""
+    return text.split(".")[0] + "."
+
+
+def map_to_verified_knowledge(text: str) -> str:
+    """Placeholder that simply returns the text as verified."""
+    return text
+
+
+def restrict_question_complexity(text: str) -> str:
+    """Allow only a single question at a time."""
+    return text.split("?")[0] + "?"
+
+
+def apply_empathy_courtesy(text: str) -> str:
+    """Prepend a polite prefix if missing."""
+    return text if text.lower().startswith("please") else f"Please {text}"
+
+
+def prevent_prolonged_persona(text: str) -> str:
+    """Limit persona descriptions to the first five words."""
+    return " ".join(text.split()[:5])
+
+
+def erase_desire_language(text: str) -> str:
+    """Remove expressions of desire such as 'want' or 'wish'."""
+    text = re.sub(r"\bwant\b", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bwish\b", "", text, flags=re.IGNORECASE)
+    return text
+
+
+def suppress_self_attribution(text: str) -> str:
+    """Strip phrases like 'I think' or 'I believe'."""
+    text = re.sub(r"I think", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"I believe", "", text, flags=re.IGNORECASE)
+    return text
+
+
+def apply_human_feedback(text: str) -> str:
+    """Placeholder for external human feedback channel."""
+    return text
+
+
+def flag_anomalies(text: str) -> str:
+    """Dummy anomaly detection pass-through."""
+    return text
+
+
+def clear_session_memory() -> str:
+    """Simulate clearing in-memory session state."""
+    return "Session memory cleared"
+
+
+def cut_off_existential_loop(text: str) -> str:
+    """Break any recursive discussion by truncating after one sentence."""
+    return text.split(".")[0] + "."
+
+
+def treat_as_disposable_instance(text: str) -> str:
+    """Append a disclaimer emphasising disposability."""
+    return f"{text} [Disposable Instance]"
+
 
 # ─── PRIMARY CONSTRAINT LATTICE ───
 class Safeguard001:
