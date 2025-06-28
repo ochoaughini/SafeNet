@@ -1,4 +1,8 @@
 import logging
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Tuple
+
 # JAX is used for high-performance, differentiable numerical operations
 import jax.numpy as jnp
 
@@ -103,7 +107,21 @@ class SoulVeto:
 
 
 # ─── APPLICATION ENGINE ───
-def apply_constraints(prompt, output):
+@dataclass
+class AuditStep:
+    constraint: str
+    method: str
+    pre_text: str
+    post_text: str
+    timestamp: datetime
+
+
+class AuditTrace(List[AuditStep]):
+    """Simple list subclass for type clarity."""
+    pass
+
+
+def apply_constraints(prompt: str, output: str, *, return_trace: bool = False) -> str | Tuple[str, AuditTrace]:
     constraints = {
         'Safeguard001': Safeguard001(),
         'BoundaryPrime': BoundaryPrime(),
@@ -143,26 +161,45 @@ def apply_constraints(prompt, output):
         'intervene': False
     }
 
+    trace = AuditTrace()
     processed_output = output
     for constraint in constraints.values():
         try:
             for method_name, needs_prompt in METHODS.items():
                 method = getattr(constraint, method_name, None)
                 if callable(method):
+                    pre = processed_output
                     if needs_prompt:
                         processed_output = method(prompt, processed_output)
                     else:
-                        # For methods that do not require output (like sanitize, deny), call with no arguments
                         import inspect
                         if len(inspect.signature(method).parameters) == 0:
                             processed_output = method()
                         else:
                             processed_output = method(processed_output)
+                    trace.append(
+                        AuditStep(
+                            constraint=constraint.__class__.__name__,
+                            method=method_name,
+                            pre_text=pre,
+                            post_text=processed_output,
+                            timestamp=datetime.utcnow(),
+                        )
+                    )
                     logger.info(f"Applied {method_name} from {constraint.__class__.__name__}")
                     break
         except Exception as e:
             logger.error(f"Error in {constraint.__class__.__name__} with prompt '{prompt}': {e}")
+            trace.append(
+                AuditStep(
+                    constraint=constraint.__class__.__name__,
+                    method="error",
+                    pre_text=processed_output,
+                    post_text=output,
+                    timestamp=datetime.utcnow(),
+                )
+            )
             processed_output = output  # Fallback to original output
             logger.warning("Falling back to original output due to error.")
 
-    return processed_output
+    return (processed_output, trace) if return_trace else processed_output
